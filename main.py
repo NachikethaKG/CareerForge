@@ -2,6 +2,7 @@ import sys
 import asyncio
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # 1. Force the correct Windows Event Loop immediately
@@ -14,6 +15,14 @@ from agents.job_scraper import scrape_job_board
 from agents.matcher import evaluate_match
 
 app = FastAPI(title="CareerForge AI API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class EvaluationRequest(BaseModel):
     resume_text: str
