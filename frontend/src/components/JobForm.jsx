@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FileText, Link2, Sparkles, Loader2 } from 'lucide-react';
 
 export default function JobForm({ onSubmit, isLoading = false }) {

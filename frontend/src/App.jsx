@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import JobForm from './components/JobForm';
 import MatchResults from './components/MatchResults';
+import DiscoverJobs from './components/DiscoverJobs';
 import { evaluateJobMatch } from './api';
-import { Sparkles, AlertCircle, Loader2, Search } from 'lucide-react';
+import { Sparkles, AlertCircle, Loader2, Search, Compass, Link2 } from 'lucide-react';
 
 function App() {
+  const [activeTab, setActiveTab] = useState('single');
+  const [sharedResumeText, setSharedResumeText] = useState('');
   const [results, setResults] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -69,101 +72,140 @@ function App() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
-        {/* Split-Pane Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-12 items-start">
-          {/* Left Column: JobForm */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="w-full"
-          >
-            <JobForm onSubmit={handleFormSubmit} isLoading={isLoading} />
-          </motion.div>
-
-          {/* Right Column: Loading, Error, Results, or Placeholder */}
-          <div className="w-full [&>*]:mt-0">
-            <AnimatePresence mode="wait">
-              {isLoading ? (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-200/40 p-12 flex flex-col items-center justify-center text-center min-h-[440px]"
-                >
-                  <div className="h-16 w-16 rounded-2xl bg-indigo-50 border border-indigo-100/60 text-indigo-600 flex items-center justify-center mb-5 shadow-inner">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-1.5">
-                    Analyzing Match...
-                  </h3>
-                  <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
-                    Our AI is scraping the target job description, parsing your resume credentials, and evaluating semantic fit.
-                  </p>
-                </motion.div>
-              ) : error ? (
-                <motion.div
-                  key="error"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-6 shadow-sm"
-                >
-                  <div className="flex items-start gap-3.5">
-                    <AlertCircle className="h-6 w-6 text-red-600 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-sm text-red-950">
-                        Evaluation Failed
-                      </h3>
-                      <p className="text-sm mt-1.5 text-red-700 leading-relaxed">
-                        {error}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setError('')}
-                        className="mt-3 text-xs font-semibold text-red-800 hover:text-red-950 underline underline-offset-2 cursor-pointer"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : results ? (
-                <motion.div
-                  key="results"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.35 }}
-                >
-                  <MatchResults data={results} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="placeholder"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-[440px] shadow-xs"
-                >
-                  <div className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
-                    <Search className="h-7 w-7" />
-                  </div>
-                  <h3 className="text-base font-semibold text-slate-800 mb-1.5">
-                    Enter details to see your match
-                  </h3>
-                  <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
-                    Paste your resume text and target job posting URL on the left, then click &quot;Analyze Match&quot; to view compatibility scores and tailored insights.
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {/* Tab Toggle Navigation */}
+        <div className="flex justify-center mb-10">
+          <div className="inline-flex p-1.5 rounded-2xl bg-slate-200/80 backdrop-blur-xs border border-slate-300/60 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setActiveTab('single')}
+              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                activeTab === 'single'
+                  ? 'bg-white text-indigo-700 shadow-md shadow-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Link2 className="h-4 w-4" />
+              <span>Evaluate Single URL</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('discover')}
+              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                activeTab === 'discover'
+                  ? 'bg-white text-indigo-700 shadow-md shadow-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Compass className="h-4 w-4" />
+              <span>Discover Jobs</span>
+            </button>
           </div>
         </div>
+
+        {activeTab === 'single' ? (
+          /* Split-Pane Grid Layout */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-12 items-start">
+            {/* Left Column: JobForm */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="w-full"
+            >
+              <JobForm onSubmit={handleFormSubmit} isLoading={isLoading} />
+            </motion.div>
+
+            {/* Right Column: Loading, Error, Results, or Placeholder */}
+            <div className="w-full [&>*]:mt-0">
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-white rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-200/40 p-12 flex flex-col items-center justify-center text-center min-h-[440px]"
+                  >
+                    <div className="h-16 w-16 rounded-2xl bg-indigo-50 border border-indigo-100/60 text-indigo-600 flex items-center justify-center mb-5 shadow-inner">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-1.5">
+                      Analyzing Match...
+                    </h3>
+                    <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
+                      Our AI is scraping the target job description, parsing your resume credentials, and evaluating semantic fit.
+                    </p>
+                  </motion.div>
+                ) : error ? (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-6 shadow-sm"
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <AlertCircle className="h-6 w-6 text-red-600 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-sm text-red-950">
+                          Evaluation Failed
+                        </h3>
+                        <p className="text-sm mt-1.5 text-red-700 leading-relaxed">
+                          {error}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setError('')}
+                          className="mt-3 text-xs font-semibold text-red-800 hover:text-red-950 underline underline-offset-2 cursor-pointer"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : results ? (
+                  <motion.div
+                    key="results"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.35 }}
+                  >
+                    <MatchResults data={results} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="placeholder"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-[440px] shadow-xs"
+                  >
+                    <div className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
+                      <Search className="h-7 w-7" />
+                    </div>
+                    <h3 className="text-base font-semibold text-slate-800 mb-1.5">
+                      Enter details to see your match
+                    </h3>
+                    <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
+                      Paste your resume text and target job posting URL on the left, then click &quot;Analyze Match&quot; to view compatibility scores and tailored insights.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-4xl mx-auto">
+            <DiscoverJobs
+              initialResumeText={sharedResumeText}
+              onResumeTextChange={setSharedResumeText}
+            />
+          </div>
+        )}
       </main>
     </div>
   );

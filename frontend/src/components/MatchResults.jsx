@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Award, FileText, ExternalLink, Quote } from 'lucide-react';
 

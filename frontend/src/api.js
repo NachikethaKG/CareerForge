@@ -15,4 +15,19 @@ export const evaluateJobMatch = async (resumeText, jobUrl) => {
   }
 };
 
+export const discoverJobs = async (resumeText, searchTerm, skip = 0, limit = 5) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/discover-jobs`, {
+      resume_text: resumeText,
+      search_term: searchTerm,
+      skip,
+      limit,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error discovering jobs:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export default evaluateJobMatch;
