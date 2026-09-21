@@ -13,6 +13,7 @@ if sys.platform == "win32":
 from agents.resume_parser import parse_resume
 from agents.job_scraper import scrape_job_board
 from agents.matcher import evaluate_match
+from agents.local_discovery import discover_jobs
 
 app = FastAPI(title="CareerForge AI API")
 
@@ -27,6 +28,34 @@ app.add_middleware(
 class EvaluationRequest(BaseModel):
     resume_text: str
     job_url: str
+
+class DiscoveryRequest(BaseModel):
+    resume_text: str
+    search_term: str
+    skip: int = 0
+    limit: int = 5
+
+@app.post("/api/discover-jobs")
+async def discover_jobs_endpoint(request: DiscoveryRequest):
+    print(f"\n🔍 Starting job discovery for: '{request.search_term}' (skip={request.skip}, limit={request.limit})")
+    try:
+        if not request.search_term or not request.search_term.strip():
+            raise HTTPException(status_code=400, detail="search_term cannot be empty.")
+        if request.skip < 0 or request.limit < 0:
+            raise HTTPException(status_code=400, detail="skip and limit must be non-negative integers.")
+
+        jobs = await discover_jobs(
+            resume_text=request.resume_text,
+            search_term=request.search_term,
+            skip=request.skip,
+            limit=request.limit,
+        )
+        return jobs
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error during job discovery: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/evaluate-job")
 async def evaluate_job_endpoint(request: EvaluationRequest):
